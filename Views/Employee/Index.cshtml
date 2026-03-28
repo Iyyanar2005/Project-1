@@ -1,28 +1,648 @@
 @model IEnumerable<MyMvcApp.Models.Employee>
 
-<h2>Employee List</h2>
+@{
+    ViewData["Title"] = "Employee Directory";
+}
 
-<form method="post" action="@Url.Action("Search", "Employee")">
-    <input type="text" name="Name" placeholder="Enter Name" />
-    <button type="submit">Search</button>
-</form>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Id</th>
-            <th>Name</th>
-            <th>Salary</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var emp in Model)
-        {
-            <tr>
-                <td>@emp.EmpID</td>
-                <td>@emp.Name</td>
-                <td>@emp.Salary</td>
-            </tr>
+<style>
+    :root {
+        --ink:        #0d0d0d;
+        --paper:      #f5f2eb;
+        --accent:     #e84c1e;
+        --accent2:    #f9b233;
+        --muted:      #7a7468;
+        --card-bg:    #ffffff;
+        --border:     #e0dbd0;
+        --row-hover:  #fff8f0;
+        --shadow:     0 4px 24px rgba(13,13,13,.08);
+        --radius:     14px;
+    }
+
+    body {
+        background-color: var(--paper);
+        font-family: 'DM Sans', sans-serif;
+        color: var(--ink);
+    }
+
+    /* ── Page wrapper ── */
+    .emp-wrapper {
+        max-width: 960px;
+        margin: 60px auto;
+        padding: 0 20px;
+    }
+
+    /* ── Header block ── */
+    .emp-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        margin-bottom: 36px;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .emp-title-group {}
+
+    .emp-eyebrow {
+        font-family: 'DM Sans', sans-serif;
+        font-size: .72rem;
+        font-weight: 500;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 4px;
+    }
+
+    .emp-title {
+        font-family: 'Syne', sans-serif;
+        font-size: 2.8rem;
+        font-weight: 800;
+        line-height: 1;
+        color: var(--ink);
+        margin: 0;
+    }
+
+    .emp-title span {
+        color: var(--accent);
+    }
+
+    /* ── Search card ── */
+    .search-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 18px 20px;
+        box-shadow: var(--shadow);
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        max-width: 380px;
+        width: 100%;
+    }
+
+    .search-card .form-control {
+        border: none;
+        background: transparent;
+        font-family: 'DM Sans', sans-serif;
+        font-size: .92rem;
+        color: var(--ink);
+        padding: 0;
+        box-shadow: none;
+        outline: none;
+    }
+
+    .search-card .form-control::placeholder { color: var(--muted); }
+
+    .search-card .search-icon {
+        color: var(--muted);
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .btn-search {
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 18px;
+        font-family: 'Syne', sans-serif;
+        font-weight: 600;
+        font-size: .85rem;
+        letter-spacing: .03em;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background .2s, transform .15s;
+        flex-shrink: 0;
+    }
+
+    .btn-search:hover {
+        background: #c73d15;
+        transform: translateY(-1px);
+    }
+
+    /* ── Stats row ── */
+    .stats-row {
+        display: flex;
+        gap: 14px;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+    }
+
+    .stat-chip {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 100px;
+        padding: 8px 18px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: .82rem;
+        font-weight: 500;
+        color: var(--muted);
+        box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    }
+
+    .stat-chip .stat-val {
+        font-family: 'Syne', sans-serif;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--ink);
+    }
+
+    .stat-chip .dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        display: inline-block;
+    }
+
+    /* ── Table card ── */
+    .table-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+    }
+
+    .table-card table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0;
+    }
+
+    /* ── Table head ── */
+    .table-card thead tr {
+        background: var(--ink);
+    }
+
+    .table-card thead th {
+        font-family: 'Syne', sans-serif;
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,.55);
+        padding: 18px 24px;
+        border: none;
+        white-space: nowrap;
+    }
+
+    .table-card thead th:first-child { color: var(--accent2); }
+
+    /* ── Table body ── */
+    .table-card tbody tr {
+        border-bottom: 1px solid var(--border);
+        transition: background .15s;
+    }
+
+    .table-card tbody tr:last-child { border-bottom: none; }
+
+    .table-card tbody tr:hover {
+        background: var(--row-hover);
+    }
+
+    .table-card tbody td {
+        padding: 18px 24px;
+        font-size: .9rem;
+        color: var(--ink);
+        vertical-align: middle;
+        border: none;
+    }
+
+    /* ID badge */
+    .id-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #f0ece4;
+        color: var(--muted);
+        font-family: 'Syne', sans-serif;
+        font-size: .78rem;
+        font-weight: 700;
+        border-radius: 6px;
+        padding: 4px 10px;
+        letter-spacing: .04em;
+    }
+
+    /* Name cell */
+    .name-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .avatar {
+        width: 36px; height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: .85rem;
+        color: #fff;
+        flex-shrink: 0;
+    }
+
+    .emp-name {
+        font-weight: 500;
+        color: var(--ink);
+    }
+
+    /* Salary */
+    .salary-val {
+        font-family: 'Syne', sans-serif;
+        font-weight: 600;
+        color: var(--ink);
+    }
+
+    .salary-val::before { content: '₹ '; color: var(--muted); font-weight: 400; font-size: .8rem; }
+
+    /* Actions */
+    .action-btn {
+        width: 32px; height: 32px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: transparent;
+        color: var(--muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .85rem;
+        cursor: pointer;
+        transition: all .15s;
+        margin-right: 4px;
+    }
+
+    .action-btn:hover {
+        background: var(--ink);
+        color: #fff;
+        border-color: var(--ink);
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 64px 24px;
+        color: var(--muted);
+    }
+
+    .empty-state i {
+        font-size: 2.5rem;
+        display: block;
+        margin-bottom: 12px;
+        color: var(--border);
+    }
+
+    .empty-state p {
+        font-size: .9rem;
+        margin: 0;
+    }
+
+    /* ── Stagger animation ── */
+    @@keyframes fadeUp {
+        from { opacity: 0; transform: translateY(14px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .emp-header       { animation: fadeUp .5s ease both; }
+    .stats-row        { animation: fadeUp .5s .1s ease both; }
+    .table-card       { animation: fadeUp .5s .18s ease both; }
+
+    .table-card tbody tr:nth-child(1)  { animation: fadeUp .35s .22s ease both; }
+    .table-card tbody tr:nth-child(2)  { animation: fadeUp .35s .28s ease both; }
+    .table-card tbody tr:nth-child(3)  { animation: fadeUp .35s .34s ease both; }
+    .table-card tbody tr:nth-child(4)  { animation: fadeUp .35s .40s ease both; }
+    .table-card tbody tr:nth-child(5)  { animation: fadeUp .35s .46s ease both; }
+    .table-card tbody tr:nth-child(n+6){ animation: fadeUp .35s .52s ease both; }
+
+    /* responsive */
+    @@media (max-width: 600px) {
+        .emp-title { font-size: 2rem; }
+        .emp-header { flex-direction: column; align-items: flex-start; }
+        .search-card { max-width: 100%; }
+        .table-card td, .table-card th { padding: 14px 14px; }
+    }
+</style>
+
+<div class="emp-wrapper">
+
+    <!-- Header -->
+    <div class="emp-header">
+        <div class="emp-title-group">
+            <p class="emp-eyebrow">Human Resources</p>
+            <h1 class="emp-title">Employee<br><span>Directory</span></h1>
+        </div>
+
+        <!-- Search -->
+        <form method="post" action="@Url.Action("Search", "Employee")" class="search-card">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text"
+                   name="Name"
+                   class="form-control"
+                   placeholder="Search by name…"
+                   autocomplete="off" />
+            <button type="submit" class="btn-search">Search</button>
+        </form>
+    </div>
+
+    <!-- Stats chips -->
+    @{
+        var empList = Model.ToList();
+        int total   = empList.Count;
+        double avg  = total > 0 ? empList.Average(e => (double)e.Salary) : 0;
+        double top  = total > 0 ? (double)empList.Max(e => e.Salary)     : 0;
+    }
+    <div class="stats-row">
+        <div class="stat-chip">
+            <span class="dot"></span>
+            <span class="stat-val">@total</span> Employees
+        </div>
+        <div class="stat-chip">
+            <i class="bi bi-graph-up-arrow" style="color:var(--accent2)"></i>
+            Avg Salary&nbsp;<span class="stat-val">₹@avg.ToString("N0")</span>
+        </div>
+        <div class="stat-chip">
+            <i class="bi bi-trophy" style="color:var(--accent)"></i>
+            Top Salary&nbsp;<span class="stat-val">₹@top.ToString("N0")</span>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>#&nbsp;ID</th>
+                    <th>Employee</th>
+                    <th>Salary</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!empList.Any())
+                {
+                    <tr>
+                        <td colspan="4">
+                            <div class="empty-state">
+                                <i class="bi bi-people"></i>
+                                <p>No employees found.</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    // Palette for avatars — cycles through a warm set
+                    string[] palette = new[] {
+                        "#e84c1e","#f9b233","#2d6a4f","#1d3557","#7b2d8b","#c1440e"
+                    };
+                    int idx = 0;
+
+                    foreach (var emp in empList)
+                    {
+                        string avatarColor = palette[idx++ % palette.Length];
+                        string initials    = string.IsNullOrWhiteSpace(emp.Name) ? "?" :
+                                             string.Concat(emp.Name.Split(' ')
+                                                           .Where(w => w.Length > 0)
+                                                           .Take(2)
+                                                           .Select(w => w[0].ToString().ToUpper()));
+                        <tr>
+                            <td><span class="id-badge">@emp.EmpID</span></td>
+                            <td>
+                                <div class="name-cell">
+                                    <div class="avatar" style="background:@avatarColor">@initials</div>
+                                    <span class="emp-name">@emp.Name</span>
+                                </div>
+                            </td>
+                            <td><span class="salary-val">@emp.Salary.ToString("N0")</span></td>
+                            <td>
+                                <button class="action-btn" title="View"><i class="bi bi-eye"></i></button>
+                                <button class="action-btn" title="Edit"><i class="bi bi-pencil"></i></button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+
+<!-- ═══════════════ EDIT MODAL ═══════════════ -->
+<div id="empModal" style="
+    display:none; position:fixed; inset:0; z-index:9999;
+    background:rgba(13,13,13,.55); backdrop-filter:blur(4px);
+    align-items:center; justify-content:center;">
+
+    <div style="
+        background:var(--card-bg); border-radius:var(--radius);
+        box-shadow:0 24px 80px rgba(13,13,13,.22);
+        width:100%; max-width:440px; margin:20px;
+        overflow:hidden; animation: fadeUp .3s ease both;">
+
+        <!-- Modal header -->
+        <div style="
+            background:var(--ink); padding:22px 28px;
+            display:flex; align-items:center; justify-content:space-between;">
+            <div>
+                <p style="margin:0; font-size:.7rem; letter-spacing:.16em;
+                    text-transform:uppercase; color:rgba(255,255,255,.45);
+                    font-family:'DM Sans',sans-serif;">Employee Record</p>
+                <h2 style="margin:0; font-family:'Syne',sans-serif;
+                    font-size:1.3rem; font-weight:700; color:#fff;">
+                    Edit Employee
+                </h2>
+            </div>
+            <button onclick="closeModal()" style="
+                background:rgba(255,255,255,.1); border:none; color:#fff;
+                width:34px; height:34px; border-radius:8px; font-size:1rem;
+                cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <!-- Modal body -->
+        <div style="padding:28px;">
+            <input type="hidden" id="modal-empid" />
+
+            <div style="margin-bottom:20px;">
+                <label style="
+                    display:block; font-size:.72rem; font-weight:500;
+                    letter-spacing:.12em; text-transform:uppercase;
+                    color:var(--muted); margin-bottom:8px;">
+                    Employee ID
+                </label>
+                <div id="modal-empid-display" style="
+                    background:#f0ece4; border-radius:8px; padding:10px 14px;
+                    font-family:'Syne',sans-serif; font-size:.9rem;
+                    font-weight:700; color:var(--muted);">
+                </div>
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <label style="
+                    display:block; font-size:.72rem; font-weight:500;
+                    letter-spacing:.12em; text-transform:uppercase;
+                    color:var(--muted); margin-bottom:8px;">
+                    Full Name
+                </label>
+                <input id="modal-name" type="text" style="
+                    width:100%; box-sizing:border-box;
+                    border:1.5px solid var(--border); border-radius:8px;
+                    padding:10px 14px; font-family:'DM Sans',sans-serif;
+                    font-size:.92rem; color:var(--ink); outline:none;
+                    transition:border-color .2s;"
+                    onfocus="this.style.borderColor='var(--accent)'"
+                    onblur="this.style.borderColor='var(--border)'" />
+            </div>
+
+            <div style="margin-bottom:28px;">
+                <label style="
+                    display:block; font-size:.72rem; font-weight:500;
+                    letter-spacing:.12em; text-transform:uppercase;
+                    color:var(--muted); margin-bottom:8px;">
+                    Salary (₹)
+                </label>
+                <input id="modal-salary" type="number" style="
+                    width:100%; box-sizing:border-box;
+                    border:1.5px solid var(--border); border-radius:8px;
+                    padding:10px 14px; font-family:'DM Sans',sans-serif;
+                    font-size:.92rem; color:var(--ink); outline:none;
+                    transition:border-color .2s;"
+                    onfocus="this.style.borderColor='var(--accent)'"
+                    onblur="this.style.borderColor='var(--border)'" />
+            </div>
+
+            <!-- Toast message -->
+            <div id="modal-toast" style="
+                display:none; padding:10px 14px; border-radius:8px;
+                font-size:.85rem; margin-bottom:16px;"></div>
+
+            <!-- Footer buttons -->
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button onclick="closeModal()" style="
+                    padding:10px 22px; border:1.5px solid var(--border);
+                    border-radius:8px; background:transparent;
+                    font-family:'Syne',sans-serif; font-weight:600;
+                    font-size:.85rem; color:var(--muted); cursor:pointer;">
+                    Cancel
+                </button>
+                <button onclick="saveEmployee()" id="btn-save" style="
+                    padding:10px 24px; border:none; border-radius:8px;
+                    background:var(--accent); color:#fff;
+                    font-family:'Syne',sans-serif; font-weight:600;
+                    font-size:.85rem; cursor:pointer;
+                    transition:background .2s, transform .15s;">
+                    <i class="bi bi-floppy"></i>&nbsp; Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ── Wire up View buttons ──────────────────────────────
+    document.querySelectorAll('.action-btn[title="View"], .action-btn[title="Edit"]')
+        .forEach(btn => {
+            btn.addEventListener('click', function () {
+                // Walk up to the <tr> and get the ID badge text
+                const row  = this.closest('tr');
+                const empID = row.querySelector('.id-badge').textContent.trim();
+                openModal(empID);
+            });
+        });
+
+    // ── Open modal & load data ────────────────────────────
+    async function openModal(empID) {
+        clearToast();
+        document.getElementById('empModal').style.display = 'flex';
+
+        try {
+            const res  = await fetch(`/Employee/GetById?id=${empID}`);
+            if (!res.ok) throw new Error('Employee not found');
+            const emp  = await res.json();
+
+            document.getElementById('modal-empid').value        = emp.empID;
+            document.getElementById('modal-empid-display').textContent = `#${emp.empID}`;
+            document.getElementById('modal-name').value          = emp.name;
+            document.getElementById('modal-salary').value        = emp.salary;
+        } catch (err) {
+            showToast(err.message, false);
         }
-    </tbody>
-</table>
+    }
+
+    // ── Save employee ─────────────────────────────────────
+    async function saveEmployee() {
+        clearToast();
+        const btn = document.getElementById('btn-save');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i>&nbsp; Saving…';
+
+        const payload = {
+            empID:  parseInt(document.getElementById('modal-empid').value),
+            name:   document.getElementById('modal-name').value.trim(),
+            salary: parseFloat(document.getElementById('modal-salary').value)
+        };
+
+        if (!payload.name) {
+            showToast('Name cannot be empty.', false);
+            resetBtn(); return;
+        }
+
+        try {
+            const res  = await fetch('/Employee/Save', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                showToast('✓ Saved successfully!', true);
+                setTimeout(() => { closeModal(); location.reload(); }, 1200);
+            } else {
+                showToast(data.message || 'Save failed.', false);
+            }
+        } catch (err) {
+            showToast('Network error. Please try again.', false);
+        } finally {
+            resetBtn();
+        }
+    }
+
+    // ── Helpers ───────────────────────────────────────────
+    function closeModal() {
+        document.getElementById('empModal').style.display = 'none';
+    }
+
+    function showToast(msg, ok) {
+        const t = document.getElementById('modal-toast');
+        t.textContent = msg;
+        t.style.display  = 'block';
+        t.style.background = ok ? '#d1fae5' : '#fee2e2';
+        t.style.color      = ok ? '#065f46' : '#991b1b';
+    }
+
+    function clearToast() {
+        document.getElementById('modal-toast').style.display = 'none';
+    }
+
+    function resetBtn() {
+        const btn = document.getElementById('btn-save');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-floppy"></i>&nbsp; Save Changes';
+    }
+
+    // Close on backdrop click
+    document.getElementById('empModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+    });
+</script>
+
+</div>

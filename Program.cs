@@ -4,7 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// ✅ Register EmployeeRepository for DI
+// ✅ Register loyeeRepository for DI
 builder.Services.AddScoped<EmployeeRepository>();
 
 var app = builder.Build();

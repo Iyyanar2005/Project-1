@@ -46,5 +46,49 @@ namespace MyMvcApp.Repositories
                 return result;
             }
          }
+
+         // ✅ Get Employee By ID (SP)
+public async Task<Employee?> GetEmployeeByID(int empID)
+{
+    using (var connection = new SqlConnection(_connStr))
+    {
+        var parameters = new DynamicParameters();
+        parameters.Add("@EmpID", empID);
+
+        var result = await connection.QueryFirstOrDefaultAsync<Employee>(
+            "spGetEmployeeByID",
+            parameters,
+            commandType: CommandType.StoredProcedure
+        );
+
+        return result;
+    }
+}
+
+// ✅ Add / Update Employee (SP)
+public async Task<string> SaveEmployee(Employee emp)
+{
+    using (var connection = new SqlConnection(_connStr))
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(new {
+            emp.EmpID,
+            emp.Name,
+            emp.Salary
+        });
+
+        var parameters = new DynamicParameters();
+        parameters.Add("@DetailsJSON", json);
+        parameters.Add("@Output1", dbType: DbType.String, size: 500,
+                       direction: ParameterDirection.Output);
+
+        await connection.ExecuteAsync(
+            "spAddEmployeeJson",
+            parameters,
+            commandType: CommandType.StoredProcedure
+        );
+
+        return parameters.Get<string>("@Output1");
+    }
+}
     }
 }
